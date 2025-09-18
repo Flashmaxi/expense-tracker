@@ -23,6 +23,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
+      // Get user profile if we have a token
       if (token) {
         try {
           const response = await api.get('/auth/profile');
@@ -76,6 +77,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('auth_token');
   };
 
+  const updateCurrency = async (currency: string) => {
+    try {
+      const response = await api.put('/auth/currency', { currency });
+      if (user) {
+        setUser({ ...user, currency });
+      }
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to update currency');
+    }
+  };
+
+  const checkSetup = async (): Promise<boolean> => {
+    try {
+      const response = await api.get('/auth/check-setup');
+      return response.data.hasPassword;
+    } catch (error) {
+      console.error('Failed to check setup:', error);
+      return false;
+    }
+  };
+
+  const setupPassword = async (password: string, currency: string = 'USD') => {
+    try {
+      const response = await api.post('/auth/setup-password', { password, currency });
+      const { token: newToken, user: userData } = response.data;
+
+      setToken(newToken);
+      setUser(userData);
+      localStorage.setItem('auth_token', newToken);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to set up password');
+    }
+  };
+
+  const loginWithPassword = async (password: string) => {
+    try {
+      const response = await api.post('/auth/login-password', { password });
+      const { token: newToken, user: userData } = response.data;
+
+      setToken(newToken);
+      setUser(userData);
+      localStorage.setItem('auth_token', newToken);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Invalid password');
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -83,6 +131,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     loading,
+    updateCurrency,
+    checkSetup,
+    setupPassword,
+    loginWithPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

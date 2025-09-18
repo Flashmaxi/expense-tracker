@@ -8,11 +8,7 @@ const Header: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-    setIsMobileMenuOpen(false);
-  };
+  // No logout needed in single-user mode
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -72,16 +68,26 @@ const Header: React.FC = () => {
             >
               Charts
             </button>
+            <button
+              onClick={() => navigate("/settings")}
+              className={`${
+                isActive("/settings")
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+              } px-3 py-2 text-sm font-medium transition-colors`}
+            >
+              Settings
+            </button>
           </nav>
 
-          {/* Desktop User Menu */}
+          {/* Desktop User Info */}
           <div className="hidden md:flex items-center space-x-4">
             <span className="text-sm text-gray-700">
               {user?.firstName} {user?.lastName}
             </span>
             <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              onClick={logout}
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               Logout
             </button>
@@ -188,6 +194,16 @@ const Header: React.FC = () => {
               >
                 Charts
               </button>
+              <button
+                onClick={() => navigateTo("/settings")}
+                className={`${
+                  isActive("/settings")
+                    ? "bg-blue-50 border-blue-500 text-blue-700"
+                    : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+                } block px-3 py-2 text-base font-medium border-l-4 transition-colors w-full text-left`}
+              >
+                Settings
+              </button>
             </div>
 
             {/* User info and logout */}
@@ -201,7 +217,7 @@ const Header: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <div className="text-base font-medium text-gray-800">
                     {user?.firstName} {user?.lastName}
                   </div>
@@ -209,13 +225,11 @@ const Header: React.FC = () => {
                     {user?.email}
                   </div>
                 </div>
-              </div>
-              <div className="mt-3 px-2 space-y-1">
                 <button
-                  onClick={handleLogout}
-                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors w-full text-left"
+                  onClick={logout}
+                  className="ml-3 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                 >
-                  Sign out
+                  Logout
                 </button>
               </div>
             </div>

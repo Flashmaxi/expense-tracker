@@ -1,39 +1,34 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import LoginForm from './components/auth/LoginForm';
-import RegisterForm from './components/auth/RegisterForm';
+import AuthFlow from './components/auth/AuthFlow';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Categories from './pages/Categories';
 import Charts from './pages/Charts';
+import Settings from './pages/Settings';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your expense tracker...</p>
+        </div>
       </div>
     );
   }
 
-  return user ? <>{children}</> : <Navigate to="/login" />;
-};
-
-const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+  // If user is not authenticated, show auth flow (setup or login)
+  if (!user) {
+    return <AuthFlow />;
   }
 
-  return !user ? <>{children}</> : <Navigate to="/dashboard" />;
+  // If user is authenticated, show the protected content
+  return <>{children}</>;
 };
 
 function App() {
@@ -43,22 +38,6 @@ function App() {
         <div className="App">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" />} />
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <LoginForm />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <RegisterForm />
-                </PublicRoute>
-              }
-            />
             <Route
               path="/dashboard"
               element={
@@ -91,6 +70,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            {/* Catch all route - redirect to dashboard */}
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </div>
       </Router>

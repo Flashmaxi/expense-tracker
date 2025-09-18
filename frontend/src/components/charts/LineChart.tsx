@@ -11,6 +11,8 @@ import {
   Legend,
 } from 'chart.js';
 import { MonthlyTrend } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { formatCurrency, getCurrencySymbol } from '../../utils/currency';
 
 ChartJS.register(
   CategoryScale,
@@ -28,6 +30,7 @@ interface LineChartProps {
 }
 
 const LineChart: React.FC<LineChartProps> = ({ data, title }) => {
+  const { user } = useAuth();
   const chartData = {
     labels: data.map(item => {
       const date = new Date(item.month + '-01');
@@ -66,7 +69,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, title }) => {
         intersect: false,
         callbacks: {
           label: function(context: any) {
-            return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
+            return `${context.dataset.label}: ${formatCurrency(context.parsed.y, user?.currency)}`;
           }
         }
       },
@@ -88,7 +91,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, title }) => {
         display: true,
         title: {
           display: true,
-          text: 'Amount ($)',
+          text: `Amount (${getCurrencySymbol(user?.currency || 'USD')})`,
         },
         beginAtZero: true,
       },

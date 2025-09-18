@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { UserModel } from '../models/User';
 import { CategoryModel } from '../models/Category';
+import currencyService from '../services/currencyService';
 
 const userModel = new UserModel();
 const categoryModel = new CategoryModel();
@@ -72,6 +73,10 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check password
+    if (!user.password) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -161,6 +166,36 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
+export const autoLogin = async (req: Request, res: Response) => {
+  try {
+    // Always login as user ID 1 (default user)
+    const user = await userModel.findById(1);
+
+    if (!user) {
+      return res.status(500).json({ error: 'Default user not found. Please restart the application.' });
+    }
+
+    // Generate JWT token for the default user
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    const token = jwt.sign({ userId: 1 }, secret, { expiresIn: '30d' });
+
+    res.json({
+      message: 'Auto-login successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        currency: user.currency || 'USD'
+      }
+    });
+  } catch (error) {
+    console.error('Auto-login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const getProfile = async (req: Request & { userId?: number }, res: Response) => {
   try {
     const userId = req.userId;
@@ -179,11 +214,156 @@ export const getProfile = async (req: Request & { userId?: number }, res: Respon
         id: user.id,
         email: user.email,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        currency: user.currency || 'USD'
       }
     });
   } catch (error) {
     console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const updateCurrency = async (req: Request & { userId?: number }, res: Response) => {
+  try {
+    const userId = req.userId;
+    const { currency } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!currency) {
+      return res.status(400).json({ error: 'Currency is required' });
+    }
+
+    if (!currencyService.isValidCurrency(currency)) {
+      return res.status(400).json({ error: 'Invalid currency code' });
+    }
+
+    await userModel.updateCurrency(userId, currency);
+
+    res.json({
+      message: 'Currency updated successfully',
+      currency
+    });
+  } catch (error) {
+    console.error('Update currency error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getSupportedCurrencies = async (req: Request, res: Response) => {
+  try {
+    const currencies = Object.values(currencyService.SUPPORTED_CURRENCIES);
+    res.json({ currencies });
+  } catch (error) {
+    console.error('Get supported currencies error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const checkSetup = async (req: Request, res: Response) => {
+  try {
+    const hasPassword = await userModel.hasPassword();
+    res.json({ hasPassword });
+  } catch (error) {
+    console.error('Check setup error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const setupPassword = async (req: Request, res: Response) => {
+  try {
+    const { password, currency } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    if (currency && !currencyService.isValidCurrency(currency)) {
+      return res.status(400).json({ error: 'Invalid currency code' });
+    }
+
+    // Check if password is already set
+    const hasPassword = await userModel.hasPassword();
+    if (hasPassword) {
+      return res.status(400).json({ error: 'Password has already been set' });
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Set password
+    await userModel.setInitialPassword(hashedPassword);
+
+    // Set currency if provided
+    if (currency) {
+      await userModel.updateCurrency(1, currency);
+    }
+
+    // Generate JWT token for the user
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    const token = jwt.sign({ userId: 1 }, secret, { expiresIn: '30d' });
+
+    // Get user data
+    const user = await userModel.findById(1);
+
+    res.json({
+      message: 'Password set successfully',
+      token,
+      user: {
+        id: user!.id,
+        email: user!.email,
+        firstName: user!.firstName,
+        lastName: user!.lastName,
+        currency: user!.currency || 'USD'
+      }
+    });
+  } catch (error) {
+    console.error('Setup password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const loginWithPassword = async (req: Request, res: Response) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    // Get user
+    const user = await userModel.findById(1);
+    if (!user || !user.password) {
+      return res.status(400).json({ error: 'Password not set. Please set up your password first.' });
+    }
+
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    // Generate JWT token
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    const token = jwt.sign({ userId: 1 }, secret, { expiresIn: '30d' });
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        currency: user.currency || 'USD'
+      }
+    });
+  } catch (error) {
+    console.error('Login with password error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

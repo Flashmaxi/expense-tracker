@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PWA Icon Generator</title>
+</head>
+<body>
+    <h2>PWA Icon Generator for Expense Tracker</h2>
+    <canvas id="canvas" style="border: 1px solid #ccc;"></canvas>
+    <br><br>
+    <button onclick="generateIcons()">Generate All Icon Sizes</button>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Icon sizes needed for PWA
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+        function drawIcon(size) {
+            canvas.width = size;
+            canvas.height = size;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+
+            // Background circle
+            ctx.fillStyle = '#3B82F6'; // Blue theme color
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 4, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Inner circle
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - size/8, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Dollar sign
+            ctx.fillStyle = '#3B82F6';
+            ctx.font = `bold ${size/3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$', size/2, size/2);
+
+            return canvas.toDataURL('image/png');
+        }
+
+        function generateIcons() {
+            sizes.forEach(size => {
+                const dataUrl = drawIcon(size);
+
+                // Create download link
+                const link = document.createElement('a');
+                link.download = `icon-${size}x${size}.png`;
+                link.href = dataUrl;
+                link.click();
+
+                console.log(`Generated icon-${size}x${size}.png`);
+            });
+
+            alert('Icons generated! Check your downloads folder and move them to /public/icons/');
+        }
+
+        // Draw initial icon
+        drawIcon(192);
+    </script>
+</body>
+</html>

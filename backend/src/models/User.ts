@@ -4,9 +4,10 @@ import DatabaseManager from './database';
 export interface User {
   id?: number;
   email: string;
-  password: string;
+  password?: string;
   firstName: string;
   lastName: string;
+  currency?: string;
   resetToken?: string;
   resetTokenExpiry?: number;
   createdAt?: string;
@@ -23,11 +24,11 @@ export class UserModel {
   public create(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     return new Promise((resolve, reject) => {
       const query = `
-        INSERT INTO users (email, password, firstName, lastName)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO users (email, password, firstName, lastName, currency)
+        VALUES (?, ?, ?, ?, ?)
       `;
 
-      this.db.run(query, [user.email, user.password, user.firstName, user.lastName], function(err) {
+      this.db.run(query, [user.email, user.password, user.firstName, user.lastName, user.currency || 'USD'], function(err) {
         if (err) {
           reject(err);
         } else {
@@ -114,6 +115,56 @@ export class UserModel {
           reject(err);
         } else {
           resolve(row || null);
+        }
+      });
+    });
+  }
+
+  public updateCurrency(userId: number, currency: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const query = `
+        UPDATE users
+        SET currency = ?, updatedAt = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `;
+
+      this.db.run(query, [currency, userId], (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  public hasPassword(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT password FROM users WHERE id = 1';
+
+      this.db.get(query, [], (err, row: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row && row.password !== null && row.password !== '');
+        }
+      });
+    });
+  }
+
+  public setInitialPassword(password: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const query = `
+        UPDATE users
+        SET password = ?, updatedAt = CURRENT_TIMESTAMP
+        WHERE id = 1
+      `;
+
+      this.db.run(query, [password], (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
         }
       });
     });

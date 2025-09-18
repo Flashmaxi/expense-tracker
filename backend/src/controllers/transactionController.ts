@@ -1,9 +1,12 @@
 import { Response } from 'express';
 import { TransactionModel } from '../models/Transaction';
+import { UserModel } from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 import bitcoinPriceService from '../services/bitcoinPriceService';
+import currencyService from '../services/currencyService';
 
 const transactionModel = new TransactionModel();
+const userModel = new UserModel();
 
 export const createTransaction = async (req: AuthRequest, res: Response) => {
   try {
@@ -22,9 +25,13 @@ export const createTransaction = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Amount must be greater than 0' });
     }
 
-    // Get Bitcoin price for the transaction date
-    const bitcoinPrice = await bitcoinPriceService.getBitcoinPriceForDate(date);
-    const satoshiAmount = bitcoinPriceService.usdToSatoshis(parseFloat(amount), bitcoinPrice);
+    // Get user's currency preference
+    const user = await userModel.findById(userId);
+    const userCurrency = user?.currency || 'USD';
+
+    // Get Bitcoin price for the transaction date in user's currency and calculate satoshis directly
+    const bitcoinPrice = await bitcoinPriceService.getBitcoinPriceForDate(date, userCurrency);
+    const satoshiAmount = bitcoinPriceService.currencyToSatoshis(parseFloat(amount), bitcoinPrice);
 
     const transactionId = await transactionModel.create({
       amount: parseFloat(amount),
@@ -118,10 +125,35 @@ export const updateTransaction = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ error: 'Amount must be greater than 0' });
       }
       updateData.amount = parseFloat(amount);
+
+      // Recalculate Bitcoin data if amount or date changed
+      const user = await userModel.findById(userId);
+      const userCurrency = user?.currency || 'USD';
+      const transactionDate = date || transaction.date;
+
+      const bitcoinPrice = await bitcoinPriceService.getBitcoinPriceForDate(transactionDate, userCurrency);
+      const satoshiAmount = bitcoinPriceService.currencyToSatoshis(parseFloat(amount), bitcoinPrice);
+
+      updateData.bitcoinPrice = bitcoinPrice;
+      updateData.satoshiAmount = satoshiAmount;
     }
     if (description !== undefined) updateData.description = description;
     if (categoryId !== undefined) updateData.categoryId = categoryId;
-    if (date !== undefined) updateData.date = date;
+    if (date !== undefined) {
+      updateData.date = date;
+
+      // Recalculate Bitcoin data if date changed (even if amount didn't)
+      if (amount === undefined) {
+        const user = await userModel.findById(userId);
+        const userCurrency = user?.currency || 'USD';
+
+        const bitcoinPrice = await bitcoinPriceService.getBitcoinPriceForDate(date, userCurrency);
+        const satoshiAmount = bitcoinPriceService.currencyToSatoshis(transaction.amount, bitcoinPrice);
+
+        updateData.bitcoinPrice = bitcoinPrice;
+        updateData.satoshiAmount = satoshiAmount;
+      }
+    }
 
     await transactionModel.update(parseInt(id), updateData);
 

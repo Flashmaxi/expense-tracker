@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import { Transaction, Category } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import { formatSatoshis, formatBitcoinPrice } from '../utils/bitcoin';
+import { formatCurrency } from '../utils/currency';
 
 const Transactions: React.FC = () => {
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -281,7 +284,7 @@ const Transactions: React.FC = () => {
                           <div className={`text-lg font-semibold ${
                             transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                           }`}>
-                            {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                            {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, user?.currency)}
                           </div>
                           {transaction.satoshiAmount && transaction.bitcoinPrice && (
                             <div className="text-xs text-orange-600">
@@ -334,7 +337,7 @@ const Transactions: React.FC = () => {
                     Description
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount (USD)
+                    Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Bitcoin Value
@@ -382,7 +385,7 @@ const Transactions: React.FC = () => {
                             transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                           }
                         >
-                          {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, user?.currency)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

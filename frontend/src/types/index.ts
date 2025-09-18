@@ -3,6 +3,7 @@ export type User = {
   email: string;
   firstName: string;
   lastName: string;
+  currency?: string;
 };
 
 export type Category = {
@@ -59,10 +60,20 @@ export type AuthContextType = {
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  updateCurrency: (currency: string) => Promise<void>;
+  checkSetup: () => Promise<boolean>;
+  setupPassword: (password: string, currency?: string) => Promise<void>;
+  loginWithPassword: (password: string) => Promise<void>;
 };
 
 export type ApiResponse<T> = {
   message?: string;
   error?: string;
   data?: T;
+};
+
+export type CurrencyInfo = {
+  code: string;
+  name: string;
+  symbol: string;
 };

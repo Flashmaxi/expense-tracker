@@ -3,10 +3,13 @@ import Layout from "../components/layout/Layout";
 import PieChart from "../components/charts/PieChart";
 import LineChart from "../components/charts/LineChart";
 import { CategorySummary, MonthlyTrend, Transaction } from "../types";
+import { useAuth } from "../contexts/AuthContext";
 import api from "../utils/api";
 import { formatSatoshis } from "../utils/bitcoin";
+import { formatCurrency } from "../utils/currency";
 
 const Charts: React.FC = () => {
+  const { user } = useAuth();
   const [expenseCategories, setExpenseCategories] = useState<CategorySummary[]>(
     []
   );
@@ -214,21 +217,21 @@ const Charts: React.FC = () => {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                $
-                {incomeCategories
-                  .reduce((sum, cat) => sum + cat.total, 0)
-                  .toFixed(2)}
+                {formatCurrency(
+                  incomeCategories.reduce((sum, cat) => sum + cat.total, 0),
+                  user?.currency
+                )}
               </div>
-              <div className="text-sm text-gray-500">Total Income (USD)</div>
+              <div className="text-sm text-gray-500">Total Income</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">
-                $
-                {expenseCategories
-                  .reduce((sum, cat) => sum + cat.total, 0)
-                  .toFixed(2)}
+                {formatCurrency(
+                  expenseCategories.reduce((sum, cat) => sum + cat.total, 0),
+                  user?.currency
+                )}
               </div>
-              <div className="text-sm text-gray-500">Total Expenses (USD)</div>
+              <div className="text-sm text-gray-500">Total Expenses</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import { TransactionSummary, MonthlyTrend, CategorySummary, Transaction } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import { formatSatoshis } from '../utils/bitcoin';
+import { formatCurrency } from '../utils/currency';
 
 const Dashboard: React.FC = () => {
+  const { user } = useAuth();
   const [summary, setSummary] = useState<TransactionSummary | null>(null);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<CategorySummary[]>([]);
@@ -72,7 +75,7 @@ const Dashboard: React.FC = () => {
                       Total Income
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      ${summary?.totalIncome.toFixed(2) || '0.00'}
+                      {formatCurrency(summary?.totalIncome || 0, user?.currency)}
                     </dd>
                   </dl>
                 </div>
@@ -94,7 +97,7 @@ const Dashboard: React.FC = () => {
                       Total Expenses
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      ${summary?.totalExpenses.toFixed(2) || '0.00'}
+                      {formatCurrency(summary?.totalExpenses || 0, user?.currency)}
                     </dd>
                   </dl>
                 </div>
@@ -116,7 +119,7 @@ const Dashboard: React.FC = () => {
                       Balance
                     </dt>
                     <dd className={`text-lg font-medium ${(summary?.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ${summary?.balance.toFixed(2) || '0.00'}
+                      {formatCurrency(summary?.balance || 0, user?.currency)}
                     </dd>
                   </dl>
                 </div>
@@ -147,7 +150,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-medium text-gray-900">
-                            ${category.total.toFixed(2)}
+                            {formatCurrency(category.total, user?.currency)}
                           </div>
                           <div className="text-xs text-gray-500">
                             {category.percentage.toFixed(1)}%
@@ -183,7 +186,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-medium text-gray-900">
-                            ${category.total.toFixed(2)}
+                            {formatCurrency(category.total, user?.currency)}
                           </div>
                           <div className="text-xs text-gray-500">
                             {category.percentage.toFixed(1)}%
@@ -226,7 +229,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className={`text-sm font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                        {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, user?.currency)}
                       </div>
                       {transaction.satoshiAmount && (
                         <div className="text-xs text-orange-600">

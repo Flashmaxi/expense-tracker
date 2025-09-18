@@ -7,6 +7,8 @@ import {
   Legend,
 } from 'chart.js';
 import { CategorySummary } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { formatCurrency } from '../../utils/currency';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -16,6 +18,7 @@ interface PieChartProps {
 }
 
 const PieChart: React.FC<PieChartProps> = ({ data, title }) => {
+  const { user } = useAuth();
   const chartData = {
     labels: data.map(item => item.categoryName),
     datasets: [
@@ -43,7 +46,7 @@ const PieChart: React.FC<PieChartProps> = ({ data, title }) => {
           label: function(context: any) {
             const value = context.parsed;
             const percentage = data[context.dataIndex]?.percentage || 0;
-            return `${context.label}: $${value.toFixed(2)} (${percentage.toFixed(1)}%)`;
+            return `${context.label}: ${formatCurrency(value, user?.currency)} (${percentage.toFixed(1)}%)`;
           }
         }
       }
