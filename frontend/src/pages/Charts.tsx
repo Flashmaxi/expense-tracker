@@ -34,16 +34,17 @@ const Charts: React.FC = () => {
       if (dateRange.startDate) params.append("startDate", dateRange.startDate);
       if (dateRange.endDate) params.append("endDate", dateRange.endDate);
 
-      const [expenseCatRes, incomeCatRes, trendsRes, transactionsRes] = await Promise.all([
-        api.get(
-          `/transactions/category-summary?type=expense&${params.toString()}`
-        ),
-        api.get(
-          `/transactions/category-summary?type=income&${params.toString()}`
-        ),
-        api.get("/transactions/monthly-trends"),
-        api.get(`/transactions?${params.toString()}`),
-      ]);
+      const [expenseCatRes, incomeCatRes, trendsRes, transactionsRes] =
+        await Promise.all([
+          api.get(
+            `/transactions/category-summary?type=expense&${params.toString()}`
+          ),
+          api.get(
+            `/transactions/category-summary?type=income&${params.toString()}`
+          ),
+          api.get("/transactions/monthly-trends"),
+          api.get(`/transactions?${params.toString()}`),
+        ]);
 
       setExpenseCategories(expenseCatRes.data.summary);
       setIncomeCategories(incomeCatRes.data.summary);
@@ -72,11 +73,21 @@ const Charts: React.FC = () => {
 
   // Calculate satoshi totals
   const getSatoshiTotals = () => {
-    const incomeTransactions = transactions.filter(t => t.type === 'income' && t.satoshiAmount);
-    const expenseTransactions = transactions.filter(t => t.type === 'expense' && t.satoshiAmount);
+    const incomeTransactions = transactions.filter(
+      (t) => t.type === "income" && t.satoshiAmount
+    );
+    const expenseTransactions = transactions.filter(
+      (t) => t.type === "expense" && t.satoshiAmount
+    );
 
-    const totalIncomeSats = incomeTransactions.reduce((sum, t) => sum + (t.satoshiAmount || 0), 0);
-    const totalExpenseSats = expenseTransactions.reduce((sum, t) => sum + (t.satoshiAmount || 0), 0);
+    const totalIncomeSats = incomeTransactions.reduce(
+      (sum, t) => sum + (t.satoshiAmount || 0),
+      0
+    );
+    const totalExpenseSats = expenseTransactions.reduce(
+      (sum, t) => sum + (t.satoshiAmount || 0),
+      0
+    );
 
     return { totalIncomeSats, totalExpenseSats };
   };
@@ -204,19 +215,19 @@ const Charts: React.FC = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xl font-bold text-green-600">
                 {incomeCategories.length}
               </div>
               <div className="text-sm text-gray-500">Income Categories</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-xl font-bold text-red-600">
                 {expenseCategories.length}
               </div>
               <div className="text-sm text-gray-500">Expense Categories</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xl font-bold text-green-600">
                 {formatCurrency(
                   incomeCategories.reduce((sum, cat) => sum + cat.total, 0),
                   user?.currency
@@ -225,7 +236,7 @@ const Charts: React.FC = () => {
               <div className="text-sm text-gray-500">Total Income</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-xl font-bold text-red-600">
                 {formatCurrency(
                   expenseCategories.reduce((sum, cat) => sum + cat.total, 0),
                   user?.currency
@@ -234,14 +245,18 @@ const Charts: React.FC = () => {
               <div className="text-sm text-gray-500">Total Expenses</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {totalIncomeSats > 0 ? formatSatoshis(totalIncomeSats) : '0 sats'}
+              <div className="text-xl font-bold text-orange-600">
+                {totalIncomeSats > 0
+                  ? formatSatoshis(totalIncomeSats)
+                  : "0 sats"}
               </div>
               <div className="text-sm text-gray-500">Total Income (Sats)</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {totalExpenseSats > 0 ? formatSatoshis(totalExpenseSats) : '0 sats'}
+              <div className="text-xl font-bold text-orange-600">
+                {totalExpenseSats > 0
+                  ? formatSatoshis(totalExpenseSats)
+                  : "0 sats"}
               </div>
               <div className="text-sm text-gray-500">Total Expenses (Sats)</div>
             </div>
