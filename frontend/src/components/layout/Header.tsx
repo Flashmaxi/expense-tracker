@@ -8,8 +8,6 @@ const Header: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // No logout needed in single-user mode
-
   const isActive = (path: string) => location.pathname === path;
 
   const navigateTo = (path: string) => {
